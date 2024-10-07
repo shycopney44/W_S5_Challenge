@@ -9,8 +9,44 @@ async function sprintChallenge5() { // Note the async keyword so you can use `aw
   // ❗ Use the variables `mentors` and `learners` to store the data.
   // ❗ Use the await keyword when using axios.
 
-  let mentors = [] // fix this
-  let learners = [] // fix this
+let mentors = [];
+let learners = [];
+
+const fetchMultipleData = async () => {
+  const urls = [
+    'http://localhost:3003/api/mentors',
+    'http://localhost:3003/api/learners',
+  ];
+
+  try {
+    const fetchPromises = urls.map(url => axios.get(url));
+    const responses = await Promise.all(fetchPromises);
+
+    mentors = responses[0].data;
+    learners = responses[1].data;
+  } catch (error) {
+    console.error('Error fetching data:', error);
+  }
+};
+
+await fetchMultipleData();
+
+learners.forEach(learner => {
+  console.log('Learner object:', learner);
+  if (learner.mentors && Array.isArray(learner.mentors)) {
+    learner.mentors.forEach(mentorId => {
+      const mentor = mentors.find(m => m.id === mentorId);
+      if (mentor) {
+        const mentorName = `${mentor.firstName} ${mentor.lastName}`;
+        console.log('Mentor name:', mentorName);
+      } else {
+        console.log(`Mentor with ID ${mentorId} not found`);
+      }
+    });
+  } else {
+    console.log('No mentors found for this learner');
+  }
+});
 
   // 👆 ==================== TASK 1 END ====================== 👆
 
@@ -29,16 +65,32 @@ async function sprintChallenge5() { // Note the async keyword so you can use `aw
   //   ]`
   // }
 
-  // 👆 ==================== TASK 2 END ====================== 👆
+  const combinedLearners = learners.map(learner => {
+    const fullName = `${learner.firstName} ${learner.lastName}`;
+    const mentorsNames = learner.mentors.map(mentorId => {
+      const mentor = mentors.find(m => m.id === mentorId);
+      return mentor ? `${mentor.firstName} ${mentor.lastName}` : null;
+    }).filter(name => name !== null);
+
+    return {
+      id: learner.id,
+      fullName: learner.fullName,
+      email: learner.email,
+      mentors: mentorsNames,
+    };
+  });
+
+  console.log(combinedLearners);
+// //   // 👆 ==================== TASK 2 END ====================== 👆
 
   const cardsContainer = document.querySelector('.cards')
-  const info = document.querySelector('.info')
+   const info = document.querySelector('.info')
   info.textContent = 'No learner is selected'
 
 
   // 👇 ==================== TASK 3 START ==================== 👇
 
-  for (let learner of learners) { // looping over each learner object
+  for (let learner of combinedLearners) { // looping over each learner object
 
     // 🧠 Flesh out the elements that describe each learner
     // ❗ Give the elements below their (initial) classes, textContent and proper nesting.
@@ -52,6 +104,36 @@ async function sprintChallenge5() { // Note the async keyword so you can use `aw
     const email = document.createElement('div')
     const mentorsHeading = document.createElement('h4')
     const mentorsList = document.createElement('ul')
+
+    card.classList.add('card');
+    heading.textContent = learner.fullName;
+    email.textContent = learner.email;
+    mentorsHeading.classList.add('closed');
+    mentorsHeading.textContent = 'Mentors';
+    mentorsList.classList.add('mentors-list');
+    mentorsList.style.display = 'none';
+
+    learner.mentors.forEach(mentorName => {
+      const mentorItem = document.createElement('li');
+      mentorItem.textContent = mentorName;
+      mentorsList.appendChild(mentorItem);
+    });
+
+    mentorsHeading.addEventListener('click', () => {
+      if (mentorsList.style.display === 'none') {
+        mentorsList.style.display = 'block';
+        mentorsHeading.classList.remove('closed');
+      } else {
+        mentorsList.style.display = 'none';
+        mentorsHeading.classList.add('closed');
+      }
+    });
+
+    card.appendChild(heading);
+    card.appendChild(email);
+    card.appendChild(mentorsHeading);
+    card.appendChild(mentorsList);
+    cardsContainer.appendChild(card);
 
     // 👆 ==================== TASK 3 END ====================== 👆
 
